@@ -1,80 +1,81 @@
 /**
- * Database service for player-related operations
+ * Servicio de base de datos para operaciones relacionadas con jugadores
  */
 
+// Importa la función que asigna roles a los jugadores desde utilidades
 const { assignRoles } = require("../utils/helpers");
 
+// Arreglo en memoria que almacena a todos los jugadores
 const players = [];
 
 /**
- * Get all players
- * @returns {Array} Array of player objects
+ * Obtener todos los jugadores
+ * @returns {Array} Lista completa de objetos jugador
  */
 const getAllPlayers = () => {
   return players;
 };
 
 /**
- * Add a new player
- * @param {string} nickname - Player's nickname
- * @param {string} socketId - Player's socket ID
- * @returns {Object} The created player
+ * Agregar un nuevo jugador
+ * @param {string} nickname - Apodo del jugador
+ * @param {string} socketId - ID del socket del jugador
+ * @returns {Object} Objeto jugador creado
  */
 const addPlayer = (nickname, socketId) => {
-  const newPlayer = { id: socketId, nickname, score: 0 };
-  players.push(newPlayer);
+  const newPlayer = { id: socketId, nickname, score: 0 }; // Crea el jugador con puntaje inicial 0
+  players.push(newPlayer); // Lo agrega al arreglo global
   return newPlayer;
 };
 
 /**
- * Find a player by their socket ID
- * @param {string} socketId - Player's socket ID
- * @returns {Object|null} Player object or null if not found
+ * Buscar un jugador por su socket ID
+ * @param {string} socketId - ID del socket a buscar
+ * @returns {Object|null} Jugador encontrado o null si no existe
  */
 const findPlayerById = (socketId) => {
   return players.find((player) => player.id === socketId) || null;
 };
 
 /**
- * Assign roles to all players
- * @returns {Array} Array of players with assigned roles
+ * Asignar roles a todos los jugadores utilizando lógica externa
+ * @returns {Array} Lista de jugadores con roles asignados
  */
 const assignPlayerRoles = () => {
-  const playersWithRoles = assignRoles(players);
-  // Update the players array with the new values
-  players.splice(0, players.length, ...playersWithRoles);
+  const playersWithRoles = assignRoles(players); // Usa helper para asignar roles
+  players.splice(0, players.length, ...playersWithRoles); // Reemplaza el contenido del arreglo original
   return players;
 };
 
 /**
- * Find players by role
- * @param {string|Array} role - Role or array of roles to find
- * @returns {Array} Array of players with the specified role(s)
+ * Buscar jugadores por uno o más roles
+ * @param {string|Array} role - Rol único o lista de roles
+ * @returns {Array} Lista de jugadores con el/los roles indicados
  */
 const findPlayersByRole = (role) => {
   if (Array.isArray(role)) {
-    return players.filter((player) => role.includes(player.role));
+    return players.filter((player) => role.includes(player.role)); // Si es array, filtra por múltiples roles
   }
-  return players.filter((player) => player.role === role);
+  return players.filter((player) => player.role === role); // Si es string, filtra por un solo rol
 };
 
 /**
- * Update score of a player
- * @param {string} socketId - Player's socket ID
- * @param {number} points - Points to add/subtract
- * @returns {Object|null} Updated player object or null
+ * Actualizar el puntaje de un jugador
+ * @param {string} socketId - ID del socket del jugador
+ * @param {number} points - Puntos a sumar o restar
+ * @returns {Object|null} Jugador actualizado o null si no se encontró
  */
 const updatePlayerScore = (socketId, points) => {
-  const player = findPlayerById(socketId);
+  const player = findPlayerById(socketId); // Busca el jugador
   if (player) {
-    player.score = (player.score || 0) + points;
+    player.score = (player.score || 0) + points; // Suma los puntos al puntaje actual
     return player;
   }
   return null;
 };
 
 /**
- * Reset all scores to zero
+ * Reiniciar el puntaje de todos los jugadores a 0
  */
 const resetAllScores = () => {
   players.forEach((player) => {
@@ -83,29 +84,29 @@ const resetAllScores = () => {
 };
 
 /**
- * Get the player who reached >= 100 points
- * @returns {Object|null} Winning player or null
+ * Obtener el jugador que alcanzó 100 puntos o más
+ * @returns {Object|null} Jugador ganador o null si nadie ha ganado
  */
 const getWinningPlayer = () => {
   return players.find((p) => p.score >= 100) || null;
 };
 
 /**
- * Get all game data (includes players)
- * @returns {Object} Object containing players array
+ * Obtener todos los datos del juego (jugadores, etc.)
+ * @returns {Object} Objeto con la propiedad players
  */
 const getGameData = () => {
   return { players };
 };
 
 /**
- * Reset game data (remove all players)
- * @returns {void}
+ * Reiniciar el juego eliminando a todos los jugadores
  */
 const resetGame = () => {
-  players.splice(0, players.length);
+  players.splice(0, players.length); // Elimina todos los elementos del arreglo
 };
 
+// Exporta todas las funciones para usarlas en el resto del servidor
 module.exports = {
   getAllPlayers,
   addPlayer,

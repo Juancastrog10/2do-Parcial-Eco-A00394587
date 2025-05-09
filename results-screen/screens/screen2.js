@@ -1,6 +1,6 @@
 import { navigateTo, socket } from "../app.js";
 
-export default function renderScreen1(data) {
+export default function renderScreen2(data) {
   const app = document.getElementById("app");
 
   app.innerHTML = `
@@ -9,8 +9,9 @@ export default function renderScreen1(data) {
       <p id="winner">Ganador: ...</p>
 
       <button id="toggleOrder">Ordenar alfabéticamente</button>
-      <button id="resetGame">Reiniciar juego</button>
-      <button id="go-screen-back">Go to previous screen</button>
+      <button id="resetGame">🔁 Reiniciar juego</button>
+
+      <div id="resetStatus" style="margin-top: 10px;"></div>
 
       <table>
         <thead>
@@ -24,13 +25,8 @@ export default function renderScreen1(data) {
     </div>
   `;
 
-  const goBackButton = document.getElementById("go-screen-back");
-  goBackButton.addEventListener("click", () => {
-    navigateTo("/");
-  });
-
   let currentPlayers = [];
-  let orderBy = "score"; // default
+  let orderBy = "score";
 
   const renderTable = () => {
     const tbody = document.getElementById("resultTable");
@@ -43,46 +39,50 @@ export default function renderScreen1(data) {
     }
 
     tbody.innerHTML = sorted
-    tbody.innerHTML = sorted
-    .map(
-      (player, index) => `
-        <tr style="font-weight: ${index === 0 ? "bold" : "normal"};">
-          <td>${index + 1}. ${player.nickname}</td>
-          <td>${player.score ?? 0}</td>
-        </tr>
-      `
-    )
-    .join("");  
+      .map(
+        (player, index) => `
+          <tr style="font-weight: ${index === 0 ? "bold" : "normal"};">
+            <td>${index + 1}. ${player.nickname}</td>
+            <td>${player.score ?? 0}</td>
+          </tr>
+        `
+      )
+      .join("");
   };
 
-  // 🔥 USAR DATOS PASADOS DESDE navigateTo
   if (data?.players && data?.winner) {
     currentPlayers = data.players;
     document.getElementById("winner").textContent = `🏆 Ganador: ${data.winner.nickname} con ${data.winner.score} puntos`;
     renderTable();
   }
 
-  // (Opcional) si alguien entra por otra vía, aún puede escuchar el evento
   socket.on("gameOverLeaderboard", ({ winner, players }) => {
     currentPlayers = players;
     document.getElementById("winner").textContent = `Ganador: ${winner.nickname}`;
     renderTable();
   });
 
-  // Cambiar orden
   document.getElementById("toggleOrder").addEventListener("click", () => {
     orderBy = orderBy === "score" ? "alphabet" : "score";
     renderTable();
   });
 
-  // Botón BONUS: reiniciar juego
+  // ✅ Botón para reiniciar juego SIN recargar página
   document.getElementById("resetGame").addEventListener("click", async () => {
+    const status = document.getElementById("resetStatus");
+    status.textContent = "Reiniciando juego...";
     try {
-      await fetch("/api/game/reset", { method: "POST" });
-      alert("Juego reiniciado. Recarga para empezar de nuevo.");
-      location.reload();
+      const response = await fetch("/api/game/reset", { method: "POST" });
+      const result = await response.json();
+      if (result.success) {
+        status.textContent = "✔️ Juego reiniciado correctamente.";
+        // No hace falta hacer más: el servidor emitirá "reset-client"
+      } else {
+        status.textContent = "❌ No se pudo reiniciar el juego.";
+      }
     } catch (err) {
-      console.error("Error al reiniciar el juego:", err);
+      console.error("Error al reiniciar:", err);
+      status.textContent = "❌ Error al conectar con el servidor.";
     }
   });
 }
